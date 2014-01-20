@@ -1,0 +1,4 @@
+(:consumer-key "XXXXXXXXXXXXXXXXXXXX"
+ :consumer-secret "XXXXXXXXXXXXXXXXXXXX"
+ :access-key "XXXXXXXXXXXXXXXXXXXX"
+ :access-secret "XXXXXXXXXXXXXXXXXXXX")

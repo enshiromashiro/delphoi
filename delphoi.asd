@@ -17,6 +17,7 @@
   :author "subaru45"
   :license "NYSL"
   :depends-on (:cl-annot
+               :cl-json
                :cl-oauth
                :series)
   :components ((:file "delphoi"))

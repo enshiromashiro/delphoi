@@ -16,7 +16,9 @@
   :version "0.1"
   :author "subaru45"
   :license "NYSL"
-  :depends-on ()
+  :depends-on (:cl-annot
+               :cl-oauth
+               :series)
   :components ((:file "delphoi"))
   :description "ridicurous bot"
   :long-description

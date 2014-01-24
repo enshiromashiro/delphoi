@@ -24,8 +24,6 @@
                                 :key ,(getf s :access-key)
                                 :secret ,(getf s :access-secret)))))
 
-(make-access-token)
-
 
 @export
 (defun home-timeline (&key count)
@@ -45,8 +43,11 @@
       "https://api.twitter.com/1.1/statuses/update.json"
       *access-token*
       :request-method :post
-      :user-parameters `(("status" . ,message))))))
+      :user-parameters `(("status" . ,message))))
+    message))
 
+
+(defparameter *output-stream* t)
 
 (defun print-tweet (json-string)
   (ignore-errors
@@ -55,18 +56,40 @@
              (x (json:decode-json-from-string json-string)))
         (with-slots (text user) x
           (with-slots (name screen--name) user
-            (format #.*standard-output* "~& ~%~a (~a)~&~a~%" screen--name name text)))))))
+            (format *output-stream* "~& ~%~a (~a)~&~a~%"
+                    screen--name name text)))))))
+
+(defmacro do-user-stream (fn)
+  (let ((in (gensym))
+        (line (gensym)))
+  `(lambda ()
+     (with-open-stream (,in (oauth:access-protected-resource
+                             "https://userstream.twitter.com/1.1/user.json"
+                             *access-token*
+                             :drakma-args '(:want-stream t)))
+       (loop for ,line = (read-line ,in nil)
+          while ,line
+          do (funcall ,fn ,line))))))
+
+
+(defparameter *user-stream-thread* nil)
+
+(flet ((make-and-set-thread (fn)
+         (setf *user-stream-thread* (bordeaux-threads:make-thread
+                                     (do-user-stream fn)
+                                     :name "user-stream"))))
+  @export
+  (defun start-user-stream (&optional fn)
+    (if (not (null *user-stream-thread*))
+        (bordeaux-threads:destroy-thread *user-stream-thread*))
+    (make-and-set-thread (if (null fn) #'print-tweet fn))))
 
 @export
-(defun timeline ()
-  (bordeaux-threads:make-thread
-   (lambda ()
-     (with-open-stream (in (oauth:access-protected-resource
-                            "https://userstream.twitter.com/1.1/user.json"
-                            *access-token*
-                            :drakma-args '(:want-stream t)))
-       (loop for line = (read-line in nil)
-          while line
-          do (print-tweet line))))
-   :name "user-stream"))
+(defun stop-user-stream ()
+  (bordeaux-threads:destroy-thread *user-stream-thread*))
 
+
+@export
+(defun init (out)
+  (make-access-token)
+  (setf *output-stream* out))

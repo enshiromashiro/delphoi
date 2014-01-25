@@ -122,6 +122,6 @@
                    (when (and (member id members)
                               (not (ppcre:scan-to-strings "出るフォイ"))
                               (ppcre:scan-to-strings "出る|出ろ|出ない" text))
-                     (tweet "出るフォイ" id--str)
+                     (tweet (format nil "@~a 出るフォイ" screen--name) id--str)
                      (format *output-stream* "** "))
                    (format *output-stream* "~a(~a) ~a~%" name screen--name text))))))))))

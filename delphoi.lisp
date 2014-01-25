@@ -25,6 +25,8 @@
                                 :secret ,(getf s :access-secret)))))
 
 
+;;; basic api
+
 @export
 (defun home-timeline (&key count)
   (let ((option (if count
@@ -36,17 +38,31 @@
       *access-token*))))
 
 @export
-(defun tweet (message)
+(defun tweet (message &optional in-reply-to-id)
   (when message
     (json:decode-json-from-string
      (oauth:access-protected-resource
       "https://api.twitter.com/1.1/statuses/update.json"
       *access-token*
       :request-method :post
-      :user-parameters `(("status" . ,message))))
+      :user-parameters `(("status" . ,message)
+                         ,(when in-reply-to-id
+                                (cons "in_reply_to_status_id" in-reply-to-id)))))
     message))
 
+@export
+(defun list-members (slug owner-screen-name)
+  (json:with-decoder-simple-clos-semantics
+      (let ((json:*json-symbols-package* :delphoi))
+        (with-slots (users) (json:decode-json-from-string
+                             (oauth:access-protected-resource
+                              (format nil "https://api.twitter.com/1.1/lists/members.json?slug=~a&owner_screen_name=~a" slug owner-screen-name)
+                              *access-token*))
+          (loop for user across users
+               collect (with-slots (screen--name id) user (cons screen--name id)))))))
 
+
+;;;; for user stream
 (defparameter *output-stream* t)
 
 (defun print-tweet (json-string)
@@ -88,8 +104,24 @@
 (defun stop-user-stream ()
   (bordeaux-threads:destroy-thread *user-stream-thread*))
 
-
 @export
 (defun init (out)
   (make-access-token)
   (setf *output-stream* out))
+
+@export
+(defun say-delphoi ()
+  (start-user-stream
+   (let ((members (mapcar #'cdr (list-members "delphoi" "subaru45"))))
+     (lambda (jsonstr)
+       (ignore-errors
+         (json:with-decoder-simple-clos-semantics
+             (let ((json:*json-symbols-package* :delphoi))
+               (with-slots (id--str text user) (json:decode-json-from-string jsonstr)
+                 (with-slots (name screen--name id) user
+                   (when (and (member id members)
+                              (not (ppcre:scan-to-strings "出るフォイ"))
+                              (ppcre:scan-to-strings "出る|出ろ|出ない" text))
+                     (tweet "出るフォイ" id--str)
+                     (format *output-stream* "** "))
+                   (format *output-stream* "~a(~a) ~a~%" name screen--name text))))))))))

@@ -120,7 +120,7 @@
                (with-slots (id--str text user) (json:decode-json-from-string jsonstr)
                  (with-slots (name screen--name id) user
                    (when (and (member id members)
-                              (not (ppcre:scan-to-strings "出るフォイ"))
+                              (not (ppcre:scan-to-strings "出るフォイ" text))
                               (ppcre:scan-to-strings "出る|出ろ|出ない" text))
                      (tweet (format nil "@~a 出るフォイ" screen--name) id--str)
                      (format *output-stream* "** "))

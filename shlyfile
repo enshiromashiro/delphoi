@@ -1,0 +1,6 @@
+(load "delphoi.asd")
+(ql:quickload :delphoi)
+
+(defun delphoi ()
+  (delphoi:init *standard-output*)
+  (delphoi:say-delphoi))

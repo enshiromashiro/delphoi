@@ -109,6 +109,22 @@
   (make-access-token)
   (setf *output-stream* out))
 
+
+;;; delphoi main
+
+(defparameter *delphoi-targets* "出る|出ろ|出ない")
+(defparameter *delphoi-ptr* 0)
+(defparameter *delphoi-words*
+  '("出るフォイ" "出るフォイ..." "出るﾌｫｲ!" "出るﾌｫｲ" "出るフォイ…" "出るフォイ！"  "出るﾌｫｲ..." "出たフォイ！" "出る…フォイ…!?" "出るフｫイ"))
+
+(defun get-delphoi () (nth *delphoi-ptr* *delphoi-words*))
+(defun next-delphoi () (setf *delphoi-ptr*
+                             (mod (1+ *delphoi-ptr*) (length *delphoi-words*))))
+(defun delphoi-words? (text)
+  (reduce (lambda (a b) (or a b))
+          (loop for w in *delphoi-words*
+               collect (ppcre:scan-to-strings (format nil "^~a$" w) text))))
+
 @export
 (defun say-delphoi ()
   (start-user-stream
@@ -120,8 +136,9 @@
                (with-slots (id--str text user) (json:decode-json-from-string jsonstr)
                  (with-slots (name screen--name id) user
                    (when (and (member id members)
-                              (not (ppcre:scan-to-strings "出るフォイ" text))
-                              (ppcre:scan-to-strings "出る|出ろ|出ない" text))
-                     (tweet (format nil "@~a 出るフォイ" screen--name) id--str)
+                              (not (delphoi-words? text))
+                              (ppcre:scan-to-strings *delphoi-targets* text))
+                     (tweet (format nil "@~a ~a" screen--name (get-delphoi)) id--str)
+                     (next-delphoi)
                      (format *output-stream* "** "))
                    (format *output-stream* "~a(~a) ~a~%" name screen--name text))))))))))

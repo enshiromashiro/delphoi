@@ -2,5 +2,9 @@
 (ql:quickload :delphoi)
 
 (defun delphoi ()
-  (delphoi:init *standard-output*)
+  (delphoi:init *standard-output*) 
   (delphoi:say-delphoi))
+
+(defun timeline ()
+  (delphoi:init *standard-output*)
+  (delphoi:start-user-stream))

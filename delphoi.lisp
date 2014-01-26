@@ -138,6 +138,7 @@
                    (when (and (member id members)
                               (not (delphoi-words? text))
                               (ppcre:scan-to-strings *delphoi-targets* text))
+                     (format *output-stream* "[['~a' to ~a]]~%" (get-delphoi) screen--name)
                      (tweet (format nil "@~a ~a" screen--name (get-delphoi)) id--str)
                      (next-delphoi)
                      (format *output-stream* "** "))

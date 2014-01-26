@@ -120,26 +120,38 @@
 (defun get-delphoi () (nth *delphoi-ptr* *delphoi-words*))
 (defun next-delphoi () (setf *delphoi-ptr*
                              (mod (1+ *delphoi-ptr*) (length *delphoi-words*))))
-(defun delphoi-words? (text)
-  (reduce (lambda (a b) (or a b))
-          (loop for w in *delphoi-words*
-               collect (ppcre:scan-to-strings (format nil "^~a$" w) text))))
+
+(defun gen-reply (user word)
+  (format nil "@~a ~a" user word))
+
+(defun delphoi-words? (text members)
+  (flet ((or-2 (a b) (or a b)))
+    (reduce #'or-2
+            (loop for w in *delphoi-words* collect 
+                 (reduce #'or-2
+                         (loop for m in members collect
+                              (ppcre:scan-to-strings 
+                               (format nil "^~a$" (gen-reply (car m) w))
+                               text)))))))
+
+(defun delphoiable? (text userid members)
+  (and (member userid members :key #'cdr)
+       (not (delphoi-words? text members))
+       (ppcre:scan-to-strings *delphoi-targets* text)))
 
 @export
 (defun say-delphoi ()
   (start-user-stream
-   (let ((members (mapcar #'cdr (list-members "delphoi" "subaru45"))))
+   (let ((members (list-members "delphoi" "subaru45")))
      (lambda (jsonstr)
        (ignore-errors
          (json:with-decoder-simple-clos-semantics
              (let ((json:*json-symbols-package* :delphoi))
                (with-slots (id--str text user) (json:decode-json-from-string jsonstr)
                  (with-slots (name screen--name id) user
-                   (when (and (member id members)
-                              (not (delphoi-words? text))
-                              (ppcre:scan-to-strings *delphoi-targets* text))
+                   (when (delphoiable? text id members)
                      (format *output-stream* "[['~a' to ~a]]~%" (get-delphoi) screen--name)
-                     (tweet (format nil "@~a ~a" screen--name (get-delphoi)) id--str)
+                     (tweet (gen-reply screen--name (get-delphoi)) id--str)
                      (next-delphoi)
                      (format *output-stream* "** "))
                    (format *output-stream* "~a(~a) ~a~%" name screen--name text))))))))))

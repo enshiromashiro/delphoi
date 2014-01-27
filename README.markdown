@@ -11,7 +11,6 @@
 * clozure cl
 * quicklisp
 * shelly
-* delphoi を quicklisp のパスが通ったところに置ける程度の能力
 
 ## Author
 

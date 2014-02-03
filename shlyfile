@@ -3,12 +3,12 @@
 
 (defun delphoi ()
   (delphoi:init *standard-output*) 
-  (delphoi:say-delphoi))
+  (delphoi:say-delphoi (* 60 30)))
 
 (defun delphoi-with-log (path)
   (format t "delphoi log will be written ~s~%" path)
   (delphoi:init (open path :direction :output :if-exists :supersede :external-format :utf-8))
-  (delphoi:say-delphoi))
+  (delphoi:say-delphoi (* 60 30)))
 
 (defun timeline ()
   (delphoi:init *standard-output*)

@@ -5,6 +5,11 @@
   (delphoi:init *standard-output*) 
   (delphoi:say-delphoi))
 
+(defun delphoi-with-log (path)
+  (format t "delphoi log will be written ~s~%" path)
+  (delphoi:init (open path :direction :output :if-exists :supersede :external-format :utf-8))
+  (delphoi:say-delphoi))
+
 (defun timeline ()
   (delphoi:init *standard-output*)
   (delphoi:start-user-stream))

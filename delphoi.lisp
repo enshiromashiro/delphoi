@@ -141,7 +141,7 @@
 
 
 @export
-(defun say-delphoi ()
+(defun say-delphoi (updsec)
   (flet ((delphoi-members () (list-members "delphoi" "subaru45")))
     (let ((members (delphoi-members)))
       (bordeaux-threads:make-thread

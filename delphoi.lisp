@@ -158,7 +158,7 @@
                    (with-slots (name screen--name id) user
                      (when (delphoiable? text id members)
                        (format *output-stream*
-                               "(:delphoi~%:message '~a'~% :user '~a(~a)'~% :tweet '~a'~%"
+                               "(:delphoi~%:message '~a'~% :user '~a(~a)'~% :tweet '~a'~%)"
                                (get-delphoi) screen--name name text)
                        (tweet (gen-reply screen--name (get-delphoi)) id--str)
                        (next-delphoi))))))))))))

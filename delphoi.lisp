@@ -146,8 +146,9 @@
     (let ((members (delphoi-members)))
       (bordeaux-threads:make-thread
        (lambda ()
-         (sleep (* updsec))
-         (setf members (delphoi-members)))
+         (loop (progn
+                 (sleep (* updsec))
+                 (setf members (delphoi-members)))))
        :name "update-list-members")
       (start-user-stream
        (lambda (jsonstr)

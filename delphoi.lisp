@@ -139,19 +139,27 @@
        (not (delphoi-words? text members))
        (ppcre:scan-to-strings *delphoi-targets* text)))
 
+
 @export
 (defun say-delphoi ()
-  (start-user-stream
-   (let ((members (list-members "delphoi" "subaru45")))
-     (lambda (jsonstr)
-       (ignore-errors
-         (json:with-decoder-simple-clos-semantics
-             (let ((json:*json-symbols-package* :delphoi))
-               (with-slots (id--str text user) (json:decode-json-from-string jsonstr)
-                 (with-slots (name screen--name id) user
-                   (when (delphoiable? text id members)
-                     (format *output-stream* "[['~a' to ~a]]~%" (get-delphoi) screen--name)
-                     (tweet (gen-reply screen--name (get-delphoi)) id--str)
-                     (next-delphoi)
-                     (format *output-stream* "** "))
-                   (format *output-stream* "~a(~a) ~a~%" name screen--name text))))))))))
+  (flet ((delphoi-members () (list-members "delphoi" "subaru45")))
+    (let ((members (delphoi-members)))
+      (bordeaux-threads:make-thread
+       (lambda ()
+         (sleep (* 60 30))
+         (setf members (delphoi-members)))
+       :name "update-list-members")
+      (start-user-stream
+       (lambda (jsonstr)
+         (ignore-errors
+           (json:with-decoder-simple-clos-semantics
+               (let ((json:*json-symbols-package* :delphoi))
+                 (with-slots (id--str text user) (json:decode-json-from-string jsonstr)
+                   (with-slots (name screen--name id) user
+                     (when (delphoiable? text id members)
+                       (format *output-stream*
+                               "(:delphoi~%:message '~a'~% :user '~a(~a)'~% :tweet '~a'~%"
+                               (get-delphoi) screen--name name text)
+                       (tweet (gen-reply screen--name (get-delphoi)) id--str)
+                       (next-delphoi))))))))))))
+

@@ -140,27 +140,33 @@
        (ppcre:scan-to-strings *delphoi-targets* text)))
 
 
+(defparameter *delphoi-members* nil)
+(defparameter *delphoi-member-update-thread* nil)
+
 @export
 (defun say-delphoi (updsec)
-  (flet ((delphoi-members () (list-members "delphoi" "subaru45")))
-    (let ((members (delphoi-members)))
-      (bordeaux-threads:make-thread
-       (lambda ()
-         (loop (progn
-                 (sleep (* updsec))
-                 (setf members (delphoi-members)))))
-       :name "update-list-members")
-      (start-user-stream
-       (lambda (jsonstr)
-         (ignore-errors
-           (json:with-decoder-simple-clos-semantics
-               (let ((json:*json-symbols-package* :delphoi))
-                 (with-slots (id--str text user) (json:decode-json-from-string jsonstr)
-                   (with-slots (name screen--name id) user
-                     (when (delphoiable? text id members)
-                       (format *output-stream*
-                               "(:delphoi~% :message '~a'~% :user '~a(~a)'~% :tweet '~a')~%"
-                               (get-delphoi) screen--name name text)
-                       (tweet (gen-reply screen--name (get-delphoi)) id--str)
-                       (next-delphoi))))))))))))
+  (flet ((update-delphoi-members ()
+           (setf *delphoi-members* (list-members "delphoi" "subaru45"))))
+    (update-delphoi-members)
+;;    (let ((members (delphoi-members)))
+    (setf *delphoi-member-update-thread*
+          (bordeaux-threads:make-thread
+           (lambda ()
+             (loop (progn
+                     (sleep (* updsec))
+                     (update-delphoi-members))))
+           :name "update-list-members"))
+    (start-user-stream
+     (lambda (jsonstr)
+       (ignore-errors
+         (json:with-decoder-simple-clos-semantics
+             (let ((json:*json-symbols-package* :delphoi))
+               (with-slots (id--str text user) (json:decode-json-from-string jsonstr)
+                 (with-slots (name screen--name id) user
+                   (when (delphoiable? text id *delphoi-members*)
+                     (format *output-stream*
+                             "(:delphoi~% :message '~a'~% :user '~a(~a)'~% :tweet '~a')~%"
+                             (get-delphoi) screen--name name text)
+                     (tweet (gen-reply screen--name (get-delphoi)) id--str)
+                     (next-delphoi)))))))))))
 

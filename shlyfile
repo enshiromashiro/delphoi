@@ -10,6 +10,15 @@
   (delphoi:init (open path :direction :output :if-exists :supersede :external-format :utf-8))
   (delphoi:say-delphoi (* 60 30)))
 
+(defvar *swank-port* 22222)
+(defun delphoi-with-swank ()
+  (ql:quickload :swank)
+  (swank:create-server :port *swank-port*
+                       :style :spawn
+                       :dont-close t)
+  (format t "delphoi working with swank server~%")
+  (delphoi))
+
 (defun timeline ()
   (delphoi:init *standard-output*)
   (delphoi:start-user-stream))
